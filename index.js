@@ -9,7 +9,6 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.ntn7mgs.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
@@ -20,14 +19,14 @@ async function run() {
 
         app.get('/services', async (req, res) => {
             const query = {};
-            const cursor = serviceCollection.find(query);
+            const cursor = serviceCollection.find(query).sort({ "_id": -01 });
             const services = await cursor.limit(3).toArray();
             res.send(services);
         });
 
         app.get('/allServices', async (req, res) => {
             const query = {};
-            const cursor = serviceCollection.find(query);
+            const cursor = serviceCollection.find(query).sort({ "_id": -01 });
             const services = await cursor.toArray();
             res.send(services);
         });
@@ -40,9 +39,9 @@ async function run() {
         });
 
         //reviews api
-        app.get('/reviews', async(req, res) => {
+        app.get('/reviews', async (req, res) => {
             let query = {};
-            if(req.query.email){
+            if (req.query.email) {
                 query = {
                     email: req.query.email
                 }
@@ -66,36 +65,39 @@ async function run() {
 
         app.patch('/reviews/:id', async (req, res) => {
             const id = req.params.id;
-            const status = req.body.status;
-            const query = { _id: ObjectId(id)}
-            const edit = {
-                $set:{
+            const status = req.body._id;
+            const query = { _id: ObjectId(id) }
+            const update = {
+                $set: {
                     status: status
                 }
             }
-            const result = await reviewCollection.updateOne(query, edit);
+            const result = await reviewCollection.updateOne(query, update);
+            res.send(result);
+        });
+
+        app.get('/reviews/:id', async (req, res) => {
+            const id = req.params.id;
+            const cursor = await reviewCollection.find({ service: id });
+            const result = await cursor.toArray();
             res.send(result);
         });
 
         app.delete('/reviews/:id', async (req, res) => {
             const id = req.params.id;
-            const query = { _id: ObjectId(id)};
+            const query = { _id: ObjectId(id) };
             const result = await reviewCollection.deleteOne(query);
             res.send(result);
         });
-
     }
     finally {
-
     }
 }
 run().catch(error => console.error(error));
 
-
 app.get('/', (req, res) => {
     res.send("service review is running");
 });
-
 app.listen(port, () => {
     console.log(`service review server running on ${port}`);
 });
